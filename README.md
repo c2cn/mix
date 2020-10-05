@@ -1,9 +1,9 @@
-> OpenMix 出品：http://openmix.org
+> OpenMix 出品：https://openmix.org
 
 <br>
 
 <p align="center">
-<img src="http://mixphp.cn/static/image/logo_php.png" width="120" alt="MixPHP">
+<img src="https://openmix.org/static/image/logo_php.png" width="120" alt="MixPHP">
 </p>
 
 <p align="center">高性能 • 轻量级 • 命令行</p>
@@ -47,6 +47,10 @@
 
 如果说 Hyperf 是 Swoole 技术圈的 Java 框架，那 Mix 就是 Golang 框架。
 
+## 与 Mix Go 的关系
+
+[MixGo](https://github.com/mix-go/mix) 设计哲学与 MixPHP 几乎完全一致，PHP 的用户可以非常容易的切换到 MixGo 进行开发，达到学一会二的效果，[OpenMix](http://openmix.org) 可能是现在唯一一个打造跨语言框架的开源机构。
+
 ## 微服务
 
 微服务方面我们激进的选择了和其他 Swoole 框架截然不同的路径，在现有流行语言中只有 java spring cloud, golang go-micro 两大微服务生态最为成熟，由于 Mix 一直是类 golang 风格框架，加上单进程协程的独特优点，我们实现了 [go-micro](https://github.com/micro/go-micro) 的代码级互通，并可以使用 [micro runtime](https://micro.mu/docs/runtime.html) 工具包的网关、代理、Dashboard 等全部微服务治理基础设施，这意味着 PHP 能与 Go 一同无缝打造高性能 RPC 服务网格，加上 Mix = beego + go-micro 两大框架的功能集合，因此采用 Mix 开发的单体应用能在无需大量修改业务代码的情况下低成本升级到微服务。
@@ -71,8 +75,14 @@
 
 MixPHP开发指南：
 
-- http://doc.mixphp.cn
+- https://openmix.org/mix-php/doc
 - https://www.kancloud.cn/onanying/mixphp2-2/content
+
+## 技术交流
+
+知乎：https://www.zhihu.com/people/onanying   
+微博：http://weibo.com/onanying    
+官方QQ群：[284806582](https://shang.qq.com/wpa/qunwpa?idkey=b3a8618d3977cda4fed2363a666b081a31d89e3d31ab164497f53b72cf49968a), [825122875](http://shang.qq.com/wpa/qunwpa?idkey=d2908b0c7095fc7ec63a2391fa4b39a8c5cb16952f6cfc3f2ce4c9726edeaf20)，敲门暗号：phper
 
 ## 环境要求
 
@@ -122,12 +132,6 @@ Listen         Port:      9501
 $> curl http://127.0.0.1:9501/
 Hello, World!
 ```
-
-## 技术交流
-
-知乎：https://www.zhihu.com/people/onanying   
-微博：http://weibo.com/onanying    
-官方QQ群：[284806582](https://shang.qq.com/wpa/qunwpa?idkey=b3a8618d3977cda4fed2363a666b081a31d89e3d31ab164497f53b72cf49968a), [825122875](http://shang.qq.com/wpa/qunwpa?idkey=d2908b0c7095fc7ec63a2391fa4b39a8c5cb16952f6cfc3f2ce4c9726edeaf20)，敲门暗号：phper
 
 ## License
 

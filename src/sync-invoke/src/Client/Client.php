@@ -15,6 +15,7 @@ class Client
 {
 
     /**
+     * Port
      * @var int
      */
     protected $port;
@@ -36,25 +37,29 @@ class Client
      * @var int
      * @deprecated 废弃，使用 maxOpen 取代
      */
-    public $maxActive = 8;
+    public $maxActive = -1;
 
     /**
      * 最大活跃数
-     * "0" 为不限制
+     * "0" 为不限制，默认等于cpu数量
      * @var int
+     * @deprecated 应该设置为 protected，为了向下兼容而保留 public
      */
-    public $maxOpen = 8;
+    public $maxOpen = -1;
 
     /**
      * 最多可空闲连接数
+     * 默认等于cpu数量
      * @var int
+     * @deprecated 应该设置为 protected，为了向下兼容而保留 public
      */
-    public $maxIdle = 8;
+    public $maxIdle = -1;
 
     /**
      * 连接可复用的最长时间
      * "0" 为不限制
      * @var int
+     * @deprecated 应该设置为 protected，为了向下兼容而保留 public
      */
     public $maxLifetime = 0;
 
@@ -62,6 +67,7 @@ class Client
      * 等待新连接超时时间
      * "0" 为不限制
      * @var float
+     * @deprecated 应该设置为 protected，为了向下兼容而保留 public
      */
     public $waitTimeout = 0.0;
 
@@ -82,29 +88,89 @@ class Client
      * @param int $port
      * @param float $timeout
      * @param float $invokeTimeout
+     * @param int $maxOpen
+     * @param int $maxIdle
+     * @param int $maxLifetime
+     * @param float $waitTimeout
      * @throws \PhpDocReader\AnnotationException
      * @throws \ReflectionException
      */
-    public function __construct(int $port, float $timeout = 5.0, float $invokeTimeout = 10.0)
+    public function __construct(int $port, float $timeout = 5.0, float $invokeTimeout = 10.0,
+                                int $maxOpen = -1, int $maxIdle = -1, int $maxLifetime = 0, float $waitTimeout = 0.0)
     {
         $this->port          = $port;
         $this->timeout       = $timeout;
         $this->invokeTimeout = $invokeTimeout;
+        $this->maxOpen       = $maxOpen;
+        $this->maxIdle       = $maxIdle;
+        $this->maxLifetime   = $maxLifetime;
+        $this->waitTimeout   = $waitTimeout;
+        $this->pool          = $this->createPool();
+    }
 
-        $this->maxOpen = &$this->maxActive; // 兼容旧版
-
-        $pool              = new ConnectionPool(
+    /**
+     * @return ConnectionPool
+     * @throws \PhpDocReader\AnnotationException
+     * @throws \ReflectionException
+     */
+    protected function createPool()
+    {
+        $pool             = new ConnectionPool(
             new Dialer([
                 'port'    => $this->port,
                 'timeout' => $this->timeout,
-            ])
+            ]),
+            $this->maxOpen,
+            $this->maxIdle,
+            $this->maxLifetime,
+            $this->waitTimeout
         );
-        $pool->maxOpen     = &$this->maxOpen;
-        $pool->maxIdle     = &$this->maxIdle;
-        $pool->maxLifetime = &$this->maxLifetime;
-        $pool->waitTimeout = &$this->waitTimeout;
-        $pool->dispatcher  = &$this->dispatcher;
-        $this->pool        = $pool;
+        $pool->dispatcher = &$this->dispatcher;
+        return $pool;
+    }
+
+    /**
+     * @param int $maxOpen
+     * @throws \PhpDocReader\AnnotationException
+     * @throws \ReflectionException
+     */
+    public function setMaxOpen(int $maxOpen)
+    {
+        $this->maxOpen = $maxOpen;
+        $this->pool    = $this->createPool();
+    }
+
+    /**
+     * @param int $maxIdle
+     * @throws \PhpDocReader\AnnotationException
+     * @throws \ReflectionException
+     */
+    public function setMaxIdle(int $maxIdle)
+    {
+        $this->maxIdle = $maxIdle;
+        $this->pool    = $this->createPool();
+    }
+
+    /**
+     * @param int $maxLifetime
+     * @throws \PhpDocReader\AnnotationException
+     * @throws \ReflectionException
+     */
+    public function setMaxLifetime(int $maxLifetime)
+    {
+        $this->maxLifetime = $maxLifetime;
+        $this->pool        = $this->createPool();
+    }
+
+    /**
+     * @param float $waitTimeout
+     * @throws \PhpDocReader\AnnotationException
+     * @throws \ReflectionException
+     */
+    public function setWaitTimeout(float $waitTimeout)
+    {
+        $this->waitTimeout = $waitTimeout;
+        $this->pool        = $this->createPool();
     }
 
     /**
