@@ -5,7 +5,9 @@ namespace Mix\ObjectPool;
 use Mix\ObjectPool\Event\DiscardedEvent;
 use Mix\ObjectPool\Exception\WaitTimeoutException;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use Swoole\Coroutine;
 use Swoole\Coroutine\Channel;
+use Swoole\Exception;
 
 /**
  * Class AbstractObjectPool
@@ -120,6 +122,7 @@ abstract class AbstractObjectPool
     /**
      * 借用连接
      * @return object
+     * @throws WaitTimeoutException
      */
     public function borrow()
     {
@@ -208,7 +211,7 @@ abstract class AbstractObjectPool
     protected function push($connection)
     {
         // 解决对象在协程外部析构导致的: Swoole\Error: API must be called in the coroutine
-        if (\Swoole\Coroutine::getCid() == -1) {
+        if (Coroutine::getCid() == -1) {
             return false;
         }
         if ($this->getIdleNumber() < $this->maxIdle) {
@@ -221,6 +224,7 @@ abstract class AbstractObjectPool
      * 弹出连接
      * @return mixed
      * @throws WaitTimeoutException
+     * @throws Exception
      */
     protected function pop()
     {
@@ -230,7 +234,10 @@ abstract class AbstractObjectPool
         }
         $object = $this->queue->pop($timeout);
         if (!$object) {
-            throw new WaitTimeoutException(sprintf('Wait timeout: %fs', $timeout));
+            if ($timeout != -1) {
+                throw new WaitTimeoutException(sprintf('Wait timeout: %fs', $timeout));
+            }
+            throw new Exception('Channel a deadlock');
         }
         return $object;
     }

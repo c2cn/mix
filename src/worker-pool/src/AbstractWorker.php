@@ -2,8 +2,9 @@
 
 namespace Mix\WorkerPool;
 
+use Mix\Sync\WaitGroup;
+use Swoole\Coroutine;
 use Swoole\Coroutine\Channel;
-use Mix\Coroutine\Coroutine;
 
 /**
  * Class AbstractWorker
@@ -14,16 +15,26 @@ abstract class AbstractWorker
 {
 
     /**
+     * @var int
+     */
+    public $workerID;
+
+    /**
      * 工作池
      * @var Channel
      */
-    public $workerPool;
+    protected $workerPool;
+
+    /**
+     * @var WaitGroup
+     */
+    protected $waitGroup;
 
     /**
      * 任务通道
      * @var Channel
      */
-    public $jobChannel;
+    protected $jobChannel;
 
     /**
      * 退出
@@ -32,12 +43,16 @@ abstract class AbstractWorker
     protected $quit;
 
     /**
-     * AbstractWorker constructor.
+     * Init
+     * @param int $workerID
      * @param Channel $workerPool
+     * @param WaitGroup $waitGroup
      */
-    public function __construct(Channel $workerPool)
+    public function init(int $workerID, Channel $workerPool, WaitGroup $waitGroup)
     {
+        $this->workerID   = $workerID;
         $this->workerPool = $workerPool;
+        $this->waitGroup  = $waitGroup;
         $this->jobChannel = new Channel();
         $this->quit       = new Channel();
     }
@@ -46,21 +61,34 @@ abstract class AbstractWorker
      * 处理
      * @param $data
      */
-    abstract public function handle($data);
+    abstract public function do($data);
+
+    /**
+     * 启动
+     * @deprecated 废弃，为了兼容旧版 WorkerPoolDispatcher 而保留
+     */
+    public function start()
+    {
+        $this->run();
+    }
 
     /**
      * 启动
      */
-    public function start()
+    public function run()
     {
+        $this->waitGroup->add(1);
         Coroutine::create(function () {
+            Coroutine::defer(function () {
+                $this->waitGroup->done();
+            });
             while (true) {
                 $this->workerPool->push($this->jobChannel);
                 $data = $this->jobChannel->pop();
                 if ($data === false) {
                     return;
                 }
-                $this->handle($data);
+                $this->do($data);
             }
         });
         Coroutine::create(function () {

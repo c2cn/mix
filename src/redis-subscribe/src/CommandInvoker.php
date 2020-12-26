@@ -2,7 +2,8 @@
 
 namespace Mix\Redis\Subscribe;
 
-use Mix\Concurrent\Timer;
+use Swoole\Timer;
+use Swoole\Coroutine;
 use Swoole\Coroutine\Channel;
 
 /**
@@ -41,7 +42,9 @@ class CommandInvoker
         $this->connection     = $connection;
         $this->resultChannel  = new Channel();
         $this->messageChannel = new Channel(100);
-        xgo([$this, 'receive'], $connection);
+        Coroutine::create(function () use ($connection) {
+            $this->receive($connection);
+        });
     }
 
     /**
@@ -94,13 +97,12 @@ class CommandInvoker
                 $message          = new Message();
                 $message->channel = $buffer[4];
                 $message->payload = $buffer[6];
-                $timer            = Timer::new();
-                $timer->after(30 * 1000, function () use ($message) {
+                $timerID          = Timer::after(30 * 1000, function () use ($message) {
                     static::error(sprintf('Message channel (%s) is 30 seconds full, disconnected', $message->channel));
                     $this->interrupt();
                 });
                 $this->messageChannel->push($message);
-                $timer->clear();
+                Timer::clear($timerID);
                 $buffer = null;
                 continue;
             }
